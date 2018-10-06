@@ -1,0 +1,12 @@
+	CLA		//clear accumulator
+	LAC	I	//bring into accumulator
+add	ADD	J	//add
+	SAC	INTER	//save
+	LAC	K	
+	ADD	L	
+	MUL	INTER	
+	STP		//stop
+I	DS	4
+J	DS	5
+K	DS	5
+L	DS	4
