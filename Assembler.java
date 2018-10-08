@@ -33,35 +33,31 @@ public class Assembler
         }
         return binary;
     }
-    public static void main(String[] args)
+
+    public static void passOne(ArrayList<Symbol> symbolTable, HashMap<String, String> opcodeTable, BufferedReader bufferedReader,FileWriter fileWriter,HashMap<String,Integer> pseudoInstructionTable)
     {
         try
         {
-            BufferedReader bufferedReader=new BufferedReader(new FileReader("assembly.txt"));
-            File machineCode=new File("machine.txt");
-            FileWriter fileWriter=new FileWriter(machineCode);
-            ArrayList<Symbol> symbolTable=new ArrayList<>();
-            HashMap<String,String> opcodeTable=new HashMap<>();
-            opcodeTable.put("CLA","0000");
-            opcodeTable.put("LAC","0001");
-            opcodeTable.put("SAC","0010");
-            opcodeTable.put("ADD","0011");
-            opcodeTable.put("SUB","0100");
-            opcodeTable.put("BRZ","0101");
-            opcodeTable.put("BRN","0110");
-            opcodeTable.put("BRP","0111");
-            opcodeTable.put("INP","1000");
-            opcodeTable.put("DSP","1001");
-            opcodeTable.put("MUL","1010");
-            opcodeTable.put("DIV","1011");
-            opcodeTable.put("STP","1100");
+            opcodeTable.put("CLA", "0000");
+            opcodeTable.put("LAC", "0001");
+            opcodeTable.put("SAC", "0010");
+            opcodeTable.put("ADD", "0011");
+            opcodeTable.put("SUB", "0100");
+            opcodeTable.put("BRZ", "0101");
+            opcodeTable.put("BRN", "0110");
+            opcodeTable.put("BRP", "0111");
+            opcodeTable.put("INP", "1000");
+            opcodeTable.put("DSP", "1001");
+            opcodeTable.put("MUL", "1010");
+            opcodeTable.put("DIV", "1011");
+            opcodeTable.put("STP", "1100");
             boolean stopOccured=false;
 
             String lineString=bufferedReader.readLine();    //read line from file
             int lineCounter=1;           //counts the lines
-            int operandAddress=108;      //address where we store the first operand
-            int locationCounter=100;     //keeps track of the length of instructions in words (1 word=12 bits)
-            String output="";            //output that is written to the file
+            int locationCounter=0;     //keeps track of the length of instructions in words (1 word=12 bits)
+
+//            String output="";            //output that is written to the file
             while(lineString!=null)
             {
                 int instructionLength=0;
@@ -74,48 +70,37 @@ public class Assembler
                 {
                     comment=instruction[3].substring(2);
                 }
-                output=output+convertToBinary(locationCounter)+'\t';  //memory address of an instruction
+//                output=output+convertToBinary(locationCounter)+'\t';  //memory address of an instruction
                 if(!stopOccured)                     //if STP has not occurred
                 {
-                    if(!opcode.equals(""))                 //checks if there is an opcode given
-                    {
-                        instructionLength=instructionLength+4;       //4 bits for opcode
-                        if(!opcode.equals("CLA") && !opcode.equals("STP"))
-                        {
-                            output=output+opcodeTable.get(opcode)+'\t';
-                        }
-                        else
-                        {
-                            output=output+opcodeTable.get(opcode)+'\n';
-                            if(opcode.equals("STP"))
-                            {
-                                stopOccured=true;
-                            }
-                        }
-                    }
-                    if(!operands.equals(""))            //checks if there are operands given
-                    {
-                        instructionLength=instructionLength+8;            //8 bits for operands
-                        output=output+convertToBinary(operandAddress)+'\n';
-                        operandAddress++;
-                    }
                     if(!symbol.equals(""))           //checks if there is a symbol
                     {
                         Symbol symbol1=new Symbol(symbol,locationCounter,null);
                         symbolTable.add(symbol1);
                     }
-                    //System.out.println(lineCount+" "+label+" "+opcode+" "+operands+" "+comment);
+
+                    if(!opcode.equals(""))                 //checks if there is an opcode given
+                    {
+                        instructionLength=instructionLength+4;       //4 bits for opcode
+                        if(opcode.equals("STP"))
+                        {
+                            stopOccured=true;
+                        }
+                    }
+                    if(!operands.equals(""))            //checks if there are operands given
+                    {
+                        instructionLength=instructionLength+8;            //8 bits for operands
+                    }
                 }
                 else                //if STP has occurred
                 {
                     Symbol symbol1=new Symbol(symbol,locationCounter,operands);
                     symbolTable.add(symbol1);
-                    output=output+operands+'\n';
                     instructionLength=12;
                 }
                 lineCounter++;       //increase line number
                 int numOfWords;
-                if(instructionLength%12!=0)    //number of words an instruction would occupy
+                if(instructionLength%12!= 0)    //number of words an instruction would occupy
                 {
                     numOfWords=(instructionLength/12)+1;
                 }
@@ -126,15 +111,49 @@ public class Assembler
                 locationCounter=locationCounter+numOfWords;   //increasing locationCounter by number of words occupied
                 lineString=bufferedReader.readLine();         //read next line
             }
-            System.out.println(output);
-            System.out.println();
+            String output="";
             for(int i=0;i<symbolTable.size();i++)
             {
-                System.out.println(convertToBinary(symbolTable.get(i).location)+'\t'+symbolTable.get(i).symbol+'\t'+symbolTable.get(i).value);
+                output=output+symbolTable.get(i).symbol+'\t'+convertToBinary(symbolTable.get(i).location)+'\t'+symbolTable.get(i).value+'\n';
             }
             fileWriter.write(output);            //write in file
             fileWriter.flush();
             fileWriter.close();
+        }
+        catch(FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args)
+    {
+        try
+        {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader("assembly.txt"));
+            File machineCode = new File("machine.txt");
+            FileWriter fileWriter = new FileWriter(machineCode);
+            ArrayList<Symbol> symbolTable = new ArrayList<>();
+            HashMap<String,Integer> pseudoInstructionTable=new HashMap<>();
+            HashMap<String, String> opcodeTable = new HashMap<>();
+            opcodeTable.put("CLA", "0000");
+            opcodeTable.put("LAC", "0001");
+            opcodeTable.put("SAC", "0010");
+            opcodeTable.put("ADD", "0011");
+            opcodeTable.put("SUB", "0100");
+            opcodeTable.put("BRZ", "0101");
+            opcodeTable.put("BRN", "0110");
+            opcodeTable.put("BRP", "0111");
+            opcodeTable.put("INP", "1000");
+            opcodeTable.put("DSP", "1001");
+            opcodeTable.put("MUL", "1010");
+            opcodeTable.put("DIV", "1011");
+            opcodeTable.put("STP", "1100");
+            passOne(symbolTable,opcodeTable,bufferedReader,fileWriter,pseudoInstructionTable);
         }
         catch (FileNotFoundException e)
         {
