@@ -6,9 +6,9 @@ public class Assembler
     public static String convertToBinary(int num)
     {
         String binary=Integer.toBinaryString(num);
-        if(binary.length()!=12)
+        if(binary.length()!=8)
         {
-            int diff=12-binary.length();
+            int diff=8-binary.length();
             for(int i=0;i<diff;i++)
             {
                 binary="0"+binary;
@@ -73,9 +73,9 @@ public class Assembler
                         if(!operands.equals(""))            //checks if there are operands given
                         {
                             instructionLength=instructionLength+8;      //8 bits for operands
-                            if(operands.charAt(0)=='\'' && operands.charAt(opcode.length()-1)=='\'')
+                            if(operands.charAt(0)=='=')
                             {
-                                String value=operands.substring(1,opcode.length()-1);
+                                String value=operands.substring(1);
                                 try
                                 {
                                     double doubleValue=Double.parseDouble(value);
@@ -170,6 +170,7 @@ public class Assembler
                     output=output+literalTable.get(i).value+'\t'+convertToBinary(literalTable.get(i).location)+'\n';
                 }
 
+                output=output+"\n";
                 fileWriter.write(output);            //write in file
                 fileWriter.flush();
                 fileWriter.close();
@@ -187,6 +188,101 @@ public class Assembler
             e.printStackTrace();
         }
         catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public static void passTwo(ArrayList<Symbol> symbolTable,ArrayList<Literal> literalTable,HashMap<String,String> opcodeTable,BufferedReader bufferedReader)
+    {
+        try
+        {
+            String lineString=bufferedReader.readLine();
+            boolean stopOccurred=false;
+            String output="Machine_Code"+"\n";
+            int locationCounter=0;
+            while(lineString!=null)
+            {
+                 if(!stopOccurred)
+                 {
+                     int instructionLength=0;
+                     String[] instruction=lineString.split("\t");
+                     String symbol=instruction[0];
+                     String opcode=instruction[1];
+                     String operands=instruction[2];
+                     String comment="";
+                     if(instruction.length==4)
+                     {
+                         comment=instruction[3].substring(2);
+                     }
+                     if(!opcode.equals("CLA") && !opcode.equals("STP"))
+                     {
+                         output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get(opcode)+"\t";
+                         if(operands.charAt(0)=='=')
+                         {
+                             String value=operands.substring(1);
+                             for(int i=0;i<literalTable.size();i++)
+                             {
+                                 if(Double.parseDouble(value)==literalTable.get(i).value)
+                                 {
+                                     output=output+convertToBinary(literalTable.get(i).location)+"\t";
+                                 }
+                             }
+                         }
+                         else
+                         {
+                             for(int i=0;i<symbolTable.size();i++)
+                             {
+                                 if(symbolTable.get(i).symbol.equals(operands))
+                                 {
+                                     output=output+convertToBinary(symbolTable.get(i).location)+"\t";
+                                 }
+                             }
+                         }
+                     }
+                     else if(opcode.equals("CLA"))
+                     {
+                         output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get("CLA")+"\t"+operands+"\t";
+                     }
+                     else if(opcode.equals("STP"))
+                     {
+                         output=output+convertToBinary(locationCounter+1)+"\t"+opcodeTable.get("STP")+"\t"+operands+"\t";
+                         stopOccurred=true;
+                     }
+                     output=output+"\n";
+                 }
+                 else
+                 {
+                     String[] instruction=lineString.split("\t");
+                     String operand=instruction[0];
+                     String type=instruction[1];
+                     String value;
+                     if(instruction.length==2)
+                     {
+                         value=null;
+                     }
+                     else
+                     {
+                         value=instruction[2];
+                     }
+                     for(int i=0;i<symbolTable.size();i++)
+                     {
+                         if(symbolTable.get(i).symbol.equals(operand))
+                         {
+                             output=output+convertToBinary(symbolTable.get(i).location)+"\t"+operand+"\t"+symbolTable.get(i).value+"\n";
+                         }
+                     }
+                 }
+                 locationCounter++;
+                 lineString=bufferedReader.readLine();
+            }
+            File machineCode=new File("/Users/vidit/Desktop/machine.txt");
+            FileWriter fileWriter=new FileWriter(machineCode,true);
+            fileWriter.write(output);
+            fileWriter.flush();
+            fileWriter.close();
+        }
+        catch (IOException e)
         {
             e.printStackTrace();
         }
@@ -217,6 +313,8 @@ public class Assembler
             opcodeTable.put("STP", "1100");
 
             passOne(symbolTable,literalTable,opcodeTable,bufferedReader,pseudoInstructionTable,errors);
+            BufferedReader bufferedReader1=new BufferedReader(new FileReader("/Users/vidit/Desktop/assembly.txt"));
+            passTwo(symbolTable,literalTable,opcodeTable,bufferedReader1);
         }
         catch (FileNotFoundException e)
         {
