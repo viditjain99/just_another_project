@@ -6,9 +6,9 @@ public class Assembler
     public static String convertToBinary(int num)   //Function to convert a number to 12 bit long binary form
     {
         String binary=Integer.toBinaryString(num);
-        if(binary.length()!=12)     // If length is not 12, then add 0s to it.
+        if(binary.length()!=8)     // If length is not 12, then add 0s to it.
         {
-            int diff=12-binary.length();
+            int diff=8-binary.length();
             for(int i=0;i<diff;i++)
             {
                 binary="0"+binary;
@@ -35,7 +35,11 @@ public class Assembler
                     String[] instruction=lineString.split("\t");
                     String symbol=instruction[0];
                     String opcode=instruction[1];
-                    String operands=instruction[2];
+                    String operands="";
+                    if(instruction.length>2)
+                    {
+                        operands=instruction[2];
+                    }
                     int number_of_operands=1;
                     if(operands.contains(",")) {
                         number_of_operands = operands.split(",").length;
@@ -99,7 +103,7 @@ public class Assembler
 
 
                         try {
-                            if(operands.equals(" ")) {  //If there are no operands
+                            if(operands.equals("")) {  //If there are no operands
                                 if(!opcode.equals("CLA") && !opcode.equals("STP")) {
                                     throw new CustomException("Opcode supplied with insufficient operands at line " + lineCounter); //ERROR- insufficient operands
                                 }
@@ -124,9 +128,9 @@ public class Assembler
                             
 
                             instructionLength=instructionLength+8;      //8 bits for operands
-                            if(operands.charAt(0)=='\'' && operands.charAt(opcode.length()-1)=='\'')
+                            if(operands.charAt(0)=='=')
                             {
-                                String value=operands.substring(1,opcode.length()-1);
+                                String value=operands.substring(1);
                                 try
                                 {
                                     double doubleValue=Double.parseDouble(value);
@@ -135,7 +139,7 @@ public class Assembler
                                 }
                                 catch(NumberFormatException e)
                                 {
-
+                                    errors.add("Invalid literal at line "+lineCounter);
                                 }
                             }
                         }
@@ -221,7 +225,7 @@ public class Assembler
 
             if(errors.size()==0)
             {
-                File machineCode=new File("/Users/Sankalp Agrawal/Desktop/CAOS_assembler/machine.txt");
+                File machineCode=new File("/Users/vidit/Desktop/just_another_project-master/machine.txt");
                 FileWriter fileWriter=new FileWriter(machineCode);
                 String output="Symbol_Table"+"\n";
                 for(int i=0;i<symbolTable.size();i++)
@@ -261,7 +265,7 @@ public class Assembler
     {
         try
         {
-            BufferedReader bufferedReader=new BufferedReader(new FileReader("/Users/Sankalp Agrawal/Desktop/CAOS_assembler/assembly.txt"));
+            BufferedReader bufferedReader=new BufferedReader(new FileReader("/Users/vidit/Desktop/just_another_project-master/assembly.txt"));
             ArrayList<String> errors=new ArrayList<>();
             ArrayList<Symbol> symbolTable=new ArrayList<>();
             ArrayList<Literal> literalTable=new ArrayList<>();
