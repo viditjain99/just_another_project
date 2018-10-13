@@ -1,6 +1,6 @@
 	CLA		//clear accumulator
 	LAC	I   	//bring into accumulator
-Add	ADD	J	//add
+Add	ADD	J,K,L	//add
 	SAC	INTER	//save
 	LAC	K
 	MUL	'2'	
