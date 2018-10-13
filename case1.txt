@@ -1,0 +1,17 @@
+	CLA		//clear accumulator
+	LAC	I   	//bring into accumulator
+Add	ADD	J	//add
+	SAC	INTER	//save
+	LAC	K
+	MUL	'2'	
+	ADD	L	
+	MUL	INTER
+	ADD	'1'
+	DIV	'5'	//divide by 5
+	STP		//stop
+I	DS	4
+I	DS	9
+J	DS	5
+K	DS	5
+L	DS	4
+INTER	DS
