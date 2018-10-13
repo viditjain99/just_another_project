@@ -3,12 +3,12 @@ import java.util.*;
 
 public class Assembler
 {
-    public static String convertToBinary(int num)
+    public static String convertToBinary(int num)   //Function to convert a number to 12 bit long binary form
     {
         String binary=Integer.toBinaryString(num);
-        if(binary.length()!=8)
+        if(binary.length()!=12)     // If length is not 12, then add 0s to it.
         {
-            int diff=8-binary.length();
+            int diff=12-binary.length();
             for(int i=0;i<diff;i++)
             {
                 binary="0"+binary;
@@ -36,46 +36,97 @@ public class Assembler
                     String symbol=instruction[0];
                     String opcode=instruction[1];
                     String operands=instruction[2];
+                    int number_of_operands=1;
+                    if(operands.contains(",")) {
+                        number_of_operands = operands.split(",").length;
+                    }
                     String comment="";
                     if(instruction.length==4)
                     {
                         comment=instruction[3].substring(2);
                     }
+
+                    try {
+                        if(opcode.equals("")) {    
+                            throw new CustomException("Opcode not added" + " at line " + lineCounter);  // ERROR- if Opcode is not added
+                        }
+                    }
+                    catch(CustomException e) {
+                        errors.add(e.getMessage());
+                    }
+                   
                     {
+
                         if(!symbol.equals(""))           //checks if there is a symbol
                         {
-                            if(opcodeTable.containsKey(symbol))      //if an opcode is used as a symbol
-                            {
-                                errors.add("Keyword "+symbol+" cannot be used at line "+lineCounter);
+                            try {
+                                if(opcodeTable.containsKey(symbol))      
+                                {
+                                    throw new CustomException("Keyword "+symbol+" cannot be used at line "+lineCounter);    // ERROR- if an opcode is used as a symbol
+                                }
+                                else
+                                {
+                                    Symbol symbol1=new Symbol(symbol,locationCounter,null,"label");
+                                    symbolTable.add(symbol1);
+                                }
                             }
-                            else
-                            {
-                                Symbol symbol1=new Symbol(symbol,locationCounter,null,"label");
-                                symbolTable.add(symbol1);
+                            catch(CustomException e) {
+                               errors.add(e.getMessage());
+                            }   
+                        }
+
+                        
+                        if(!opcode.equals(""))                 //checks if there is an opcode given   
+                        {
+                            try {
+                                if(opcodeTable.containsKey(opcode))
+                                {
+                                    instructionLength=instructionLength+4;          //4 bits for opcode
+                                    if(opcode.equals("STP"))
+                                    {
+                                        stopOccurred=true;
+                                    }
+                                }
+                                else           
+                                {
+                                    throw new CustomException("Opcode "+opcode+" not found at line "+lineCounter);  //ERROR- invalid opcode
+                                }
+                            }
+                            catch(CustomException e) {
+                               errors.add(e.getMessage());
                             }
                         }
 
-                        if(!opcode.equals(""))                 //checks if there is an opcode given   //HANDLE CASE IF OPCODE IS NOT SUPPLIED
-                        {
-                            if(opcodeTable.containsKey(opcode))
-                            {
-                                instructionLength=instructionLength+4;          //4 bits for opcode
-                                if(opcode.equals("STP"))
-                                {
-                                    stopOccurred=true;
+
+                        try {
+                            if(operands.equals(" ")) {  //If there are no operands
+                                if(!opcode.equals("CLA") && !opcode.equals("STP")) {
+                                    throw new CustomException("Opcode supplied with insufficient operands at line " + lineCounter); //ERROR- insufficient operands
                                 }
                             }
-                            else           //invalid opcode
-                            {
-                                errors.add("Opcode "+opcode+" not found at line "+lineCounter);
-                            }
                         }
+                        catch(CustomException e) {
+                               errors.add(e.getMessage());
+                        }
+                        
+
+
                         if(!operands.equals(""))            //checks if there are operands given
                         {
+                            try {
+                                if(opcode.equals("CLA") || opcode.equals("STP") || number_of_operands>1) {
+                                    throw new CustomException("Opcode supplied with too many operands at line " + lineCounter); //ERROR- Opcode supplied with too many operands
+                                }
+                            }
+                            catch(CustomException e) {
+                               errors.add(e.getMessage());
+                            }
+                            
+
                             instructionLength=instructionLength+8;      //8 bits for operands
-                            if(operands.charAt(0)=='=')
+                            if(operands.charAt(0)=='\'' && operands.charAt(opcode.length()-1)=='\'')
                             {
-                                String value=operands.substring(1);
+                                String value=operands.substring(1,opcode.length()-1);
                                 try
                                 {
                                     double doubleValue=Double.parseDouble(value);
@@ -88,6 +139,8 @@ public class Assembler
                                 }
                             }
                         }
+
+
                     }
                 }
 
@@ -143,34 +196,45 @@ public class Assembler
             Iterator iterator=collection.iterator();
             while(iterator.hasNext())
             {
-                String key=(String) iterator.next();
-                if(operandsDeclaration.get(key)>1)
-                {
-                    errors.add("Multiple declarations of "+key);
+                try {
+                   String key=(String) iterator.next();
+                    if(operandsDeclaration.get(key)>1) 
+                    {
+                        throw new CustomException("Multiple declarations of "+key);  // ERROR- Operand delcared multiple times
+                    } 
+                }
+                catch(CustomException e) {
+                    errors.add(e.getMessage());
                 }
             }
-            if(!stopOccurred)
-            {
-                errors.add("STP statement missing");
+
+            try {
+                if(!stopOccurred) 
+                {
+                    throw new CustomException("STP statement missing");    // ERROR- STP statement not present
+                }
             }
+            catch(CustomException e) {
+                errors.add(e.getMessage());
+            }
+            
 
             if(errors.size()==0)
             {
-                File machineCode=new File("/Users/vidit/Desktop/machine.txt");
+                File machineCode=new File("/Users/Sankalp Agrawal/Desktop/CAOS_assembler/machine.txt");
                 FileWriter fileWriter=new FileWriter(machineCode);
-                String output="Symbol_Table"+'\n';
+                String output="Symbol_Table"+"\n";
                 for(int i=0;i<symbolTable.size();i++)
                 {
                     output=output+symbolTable.get(i).symbol+'\t'+convertToBinary(symbolTable.get(i).location)+'\t'+symbolTable.get(i).value+'\n';
                 }
 
-                output=output+'\n'+"Literal_Table"+'\n';
+                output=output+'\n'+"Literal_Table"+"\n";
                 for(int i=0;i<literalTable.size();i++)
                 {
                     output=output+literalTable.get(i).value+'\t'+convertToBinary(literalTable.get(i).location)+'\n';
                 }
 
-                output=output+"\n";
                 fileWriter.write(output);            //write in file
                 fileWriter.flush();
                 fileWriter.close();
@@ -193,106 +257,11 @@ public class Assembler
         }
     }
 
-    public static void passTwo(ArrayList<Symbol> symbolTable,ArrayList<Literal> literalTable,HashMap<String,String> opcodeTable,BufferedReader bufferedReader)
-    {
-        try
-        {
-            String lineString=bufferedReader.readLine();
-            boolean stopOccurred=false;
-            String output="Machine_Code"+"\n";
-            int locationCounter=0;
-            while(lineString!=null)
-            {
-                 if(!stopOccurred)
-                 {
-                     int instructionLength=0;
-                     String[] instruction=lineString.split("\t");
-                     String symbol=instruction[0];
-                     String opcode=instruction[1];
-                     String operands=instruction[2];
-                     String comment="";
-                     if(instruction.length==4)
-                     {
-                         comment=instruction[3].substring(2);
-                     }
-                     if(!opcode.equals("CLA") && !opcode.equals("STP"))
-                     {
-                         output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get(opcode)+"\t";
-                         if(operands.charAt(0)=='=')
-                         {
-                             String value=operands.substring(1);
-                             for(int i=0;i<literalTable.size();i++)
-                             {
-                                 if(Double.parseDouble(value)==literalTable.get(i).value)
-                                 {
-                                     output=output+convertToBinary(literalTable.get(i).location)+"\t";
-                                 }
-                             }
-                         }
-                         else
-                         {
-                             for(int i=0;i<symbolTable.size();i++)
-                             {
-                                 if(symbolTable.get(i).symbol.equals(operands))
-                                 {
-                                     output=output+convertToBinary(symbolTable.get(i).location)+"\t";
-                                 }
-                             }
-                         }
-                     }
-                     else if(opcode.equals("CLA"))
-                     {
-                         output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get("CLA")+"\t"+operands+"\t";
-                     }
-                     else if(opcode.equals("STP"))
-                     {
-                         output=output+convertToBinary(locationCounter+1)+"\t"+opcodeTable.get("STP")+"\t"+operands+"\t";
-                         stopOccurred=true;
-                     }
-                     output=output+"\n";
-                 }
-                 else
-                 {
-                     String[] instruction=lineString.split("\t");
-                     String operand=instruction[0];
-                     String type=instruction[1];
-                     String value;
-                     if(instruction.length==2)
-                     {
-                         value=null;
-                     }
-                     else
-                     {
-                         value=instruction[2];
-                     }
-                     for(int i=0;i<symbolTable.size();i++)
-                     {
-                         if(symbolTable.get(i).symbol.equals(operand))
-                         {
-                             output=output+convertToBinary(symbolTable.get(i).location)+"\t"+operand+"\t"+symbolTable.get(i).value+"\n";
-                         }
-                     }
-                 }
-                 locationCounter++;
-                 lineString=bufferedReader.readLine();
-            }
-            File machineCode=new File("/Users/vidit/Desktop/machine.txt");
-            FileWriter fileWriter=new FileWriter(machineCode,true);
-            fileWriter.write(output);
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
     public static void main(String[] args)
     {
         try
         {
-            BufferedReader bufferedReader=new BufferedReader(new FileReader("/Users/vidit/Desktop/assembly.txt"));
+            BufferedReader bufferedReader=new BufferedReader(new FileReader("/Users/Sankalp Agrawal/Desktop/CAOS_assembler/assembly.txt"));
             ArrayList<String> errors=new ArrayList<>();
             ArrayList<Symbol> symbolTable=new ArrayList<>();
             ArrayList<Literal> literalTable=new ArrayList<>();
@@ -313,8 +282,6 @@ public class Assembler
             opcodeTable.put("STP", "1100");
 
             passOne(symbolTable,literalTable,opcodeTable,bufferedReader,pseudoInstructionTable,errors);
-            BufferedReader bufferedReader1=new BufferedReader(new FileReader("/Users/vidit/Desktop/assembly.txt"));
-            passTwo(symbolTable,literalTable,opcodeTable,bufferedReader1);
         }
         catch (FileNotFoundException e)
         {
