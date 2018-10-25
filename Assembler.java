@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Assembler
 {
-    public static String convertToBinary(int num)
+    public static String convertToBinary(int num)          //Function for converting a decimal number to 8 bit binary form
     {
         String binary=Integer.toBinaryString(num);
         if(binary.length()!=8)
@@ -49,7 +49,8 @@ public class Assembler
                         String symbol=instruction[0];
                         opcode=instruction[1];
                         operands="";
-                        int numberOfOperands=0;
+                        
+                        int numberOfOperands=0;     // Calculating number of operands for error reporting
                         if(instruction.length>2)
                         {
                             operands=instruction[2];
@@ -59,6 +60,7 @@ public class Assembler
                         {
                             numberOfOperands=operands.split(",").length;
                         }
+
                         String comment="";
                         if(instruction.length==4)
                         {
@@ -72,7 +74,7 @@ public class Assembler
                                 {
                                     if(opcodeTable.containsKey(symbol))      //if an opcode is used as a symbol
                                     {
-                                        throw(new CustomException("Keyword "+symbol+" cannot be used at line "+lineCounter));
+                                        throw(new CustomException("Keyword "+symbol+" cannot be used at line "+lineCounter));   // ERROR- Opcode used as a symbol
                                     }
                                     else
                                     {
@@ -114,7 +116,7 @@ public class Assembler
                                     else           //invalid opcode
                                     {
                                         error=true;
-                                        throw(new CustomException("Opcode not found at line "+lineCounter));
+                                        throw(new CustomException("Opcode not found at line "+lineCounter));  // ERROR- invalid Opcode 
                                     }
                                 }
                                 catch(CustomException e)
@@ -129,7 +131,7 @@ public class Assembler
                                     if(!opcode.equals("CLA") && !opcode.equals("STP"))
                                     {
                                         error=true;
-                                        throw(new CustomException("Opcode supplied with insufficient operands at line "+lineCounter));
+                                        throw(new CustomException("Opcode supplied with insufficient operands at line "+lineCounter));  // ERROR- Opcode supplied with insufficient operands
                                     }
                                 }
                             }
@@ -145,7 +147,7 @@ public class Assembler
                                     if(opcode.equals("CLA") || opcode.equals("STP") || numberOfOperands>1)
                                     {
                                         error=true;
-                                        throw new CustomException("Opcode supplied with too may operands at line "+lineCounter);
+                                        throw new CustomException("Opcode supplied with too may operands at line "+lineCounter);    // ERROR- Opcode supplied with too many operands
                                     }
                                 }
                                 catch(CustomException e)
@@ -209,7 +211,7 @@ public class Assembler
                     {
                         if(locationCounter>255)
                         {
-                            throw new CustomException("Memory not available");
+                            throw new CustomException("Memory not available");  // ERROR- Insufficient memory space
                         }
                     }
                     catch(CustomException e)
@@ -292,7 +294,7 @@ public class Assembler
                 {
                     if(!opcode_output_table.get(i).operand.equals(""))
                     {
-                        if(opcode_output_table.get(i).operand.charAt(0)=='=')
+                        if(opcode_output_table.get(i).operand.charAt(0)=='=')   //checking if ith operand is a literal or not
                         {
                             output=output+opcode_output_table.get(i).opcode +'\t'+ opcode_output_table.get(i).binary +'\t'+opcode_output_table.get(i).ilc+'\t' +opcode_output_table.get(i).operand+'\t'+"immed8"+'\n';
                         }
@@ -403,7 +405,7 @@ public class Assembler
             ArrayList<Literal> literalTable=new ArrayList<>();
             ArrayList<Opcode_output> opcode_output_table = new ArrayList<>();
             HashMap<String, String> opcodeTable=new HashMap<>();
-            opcodeTable.put("CLA", "0000");
+            opcodeTable.put("CLA", "0000");     // Adding given opcodes in the opcode table
             opcodeTable.put("LAC", "0001");
             opcodeTable.put("SAC", "0010");
             opcodeTable.put("ADD", "0011");
