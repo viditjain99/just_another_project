@@ -17,7 +17,7 @@ public class Assembler
         return binary;
     }
 
-    public static String passOne(ArrayList<Symbol> symbolTable,ArrayList<Literal> literalTable, HashMap<String, String> opcodeTable, BufferedReader bufferedReader,HashMap<String,Integer> opcode_output,ArrayList<String> errors)
+    public static String passOne(ArrayList<Symbol> symbolTable,ArrayList<Literal> literalTable, HashMap<String, String> opcodeTable, BufferedReader bufferedReader,ArrayList<Opcode_output> opcode_output_table,ArrayList<String> errors)
     {
         String output="";
         try
@@ -27,10 +27,13 @@ public class Assembler
             String lineString=bufferedReader.readLine();    //read line from file
             int lineCounter=1;           //counts the lines
             int locationCounter=0;     //keeps track of the length of instructions in words (1 word=12 bits)
-
+            
 
             while(lineString!=null)
             {
+                String opcode="";
+                String operands="";
+                
                 if(lineString.equals(""))
                 {
                     lineString=bufferedReader.readLine();
@@ -42,8 +45,8 @@ public class Assembler
                     {
                         String[] instruction=lineString.split("\t");
                         String symbol=instruction[0];
-                        String opcode=instruction[1];
-                        String operands="";
+                        opcode=instruction[1];
+                        operands="";
                         int numberOfOperands=0;
                         if(instruction.length>2)
                         {
@@ -180,7 +183,8 @@ public class Assembler
                     }
                     locationCounter=locationCounter+numOfWords;                     //increasing locationCounter by number of words occupied
                     
-                    opcode_output.put(opcode,locationCounter);
+                    Opcode_output opcode_output = new Opcode_output(opcode,locationCounter,operands,opcodeTable.get(opcode));
+                    opcode_output_table.add(opcode_output);
                     try
                     {
                         if(locationCounter>255)
@@ -264,11 +268,8 @@ public class Assembler
                 }
 
                 output=output+'\n'+"Opcode_Table"+'\n';
-                Set set = opcode_output.entrySet();
-                Iterator iterator = set.iterator();
-                while(iterator.hasNext()) {
-                    Map.Entry mentry = (Map.Entry) iterator.next();
-                    output = output + mentry.getKey() + '\t' + mentry.getValue() + '\n';
+                for(int i=0;i<opcode_output_table.size();i++) {
+                    output = output + opcode_output_table.get(i).toString();
                 }
                 output=output+"\n";
             }
@@ -429,7 +430,7 @@ public class Assembler
             ArrayList<String> errors1=new ArrayList<>();
             ArrayList<Symbol> symbolTable=new ArrayList<>();
             ArrayList<Literal> literalTable=new ArrayList<>();
-            HashMap<String,Integer> opcode_output=new HashMap<>();
+            ArrayList<Opcode_output> opcode_output_table = new ArrayList<>();
             HashMap<String, String> opcodeTable=new HashMap<>();
             opcodeTable.put("CLA", "0000");
             opcodeTable.put("LAC", "0001");
@@ -445,7 +446,7 @@ public class Assembler
             opcodeTable.put("DIV", "1011");
             opcodeTable.put("STP", "1100");
 
-            String passOneOutput=passOne(symbolTable,literalTable,opcodeTable,bufferedReader,opcode_output,errors);
+            String passOneOutput=passOne(symbolTable,literalTable,opcodeTable,bufferedReader,opcode_output_table,errors);
             String passTwoOutput=passTwo(symbolTable,literalTable,opcodeTable,bufferedReader1,errors1);
             if(!passOneOutput.equals("") && !passTwoOutput.equals(""))
             {
