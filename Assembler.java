@@ -17,7 +17,7 @@ public class Assembler
         return binary;
     }
 
-    public static String passOne(ArrayList<Symbol> symbolTable,ArrayList<Literal> literalTable, HashMap<String, String> opcodeTable, BufferedReader bufferedReader,ArrayList<String> errors)
+    public static String passOne(ArrayList<Symbol> symbolTable,ArrayList<Literal> literalTable, HashMap<String, String> opcodeTable, BufferedReader bufferedReader,HashMap<String,Integer> opcode_output,ArrayList<String> errors)
     {
         String output="";
         try
@@ -27,7 +27,6 @@ public class Assembler
             String lineString=bufferedReader.readLine();    //read line from file
             int lineCounter=1;           //counts the lines
             int locationCounter=0;     //keeps track of the length of instructions in words (1 word=12 bits)
-            HashMap<String,Integer> opcode_output=new HashMap<>();
 
 
             while(lineString!=null)
@@ -89,7 +88,6 @@ public class Assembler
                                     if(opcodeTable.containsKey(opcode))
                                     {
                                         instructionLength=instructionLength+4;          //4 bits for opcode
-                                        opcode_output.put(opcode+'\t'+opcodeTable.get(opcode),locationCounter);
                                         if(opcode.equals("STP"))
                                         {
                                             stopOccurred=true;
@@ -181,7 +179,8 @@ public class Assembler
                         numOfWords=instructionLength/12;
                     }
                     locationCounter=locationCounter+numOfWords;                     //increasing locationCounter by number of words occupied
-
+                    
+                    opcode_output.put(opcode,locationCounter);
                     try
                     {
                         if(locationCounter>255)
@@ -255,24 +254,23 @@ public class Assembler
                 output="Symbol_Table"+'\n';
                 for(int i=0;i<symbolTable.size();i++)
                 {
-                    output=output+symbolTable.get(i).symbol+'\t'+symbolTable.get(i).type+'\t'+symbolTable.get(i).location+'\t'+symbolTable.get(i).value+'\n';
+                    output=output+symbolTable.get(i).symbol+'\t'+convertToBinary(symbolTable.get(i).location)+'\t'+symbolTable.get(i).value+'\n';
                 }
 
-                output=output+'\n'+'\n'+"Literal_Table"+'\n';
+                output=output+'\n'+"Literal_Table"+'\n';
                 for(int i=0;i<literalTable.size();i++)
                 {
-                    output=output+literalTable.get(i).value+'\t'+literalTable.get(i).location+'\n';
+                    output=output+literalTable.get(i).value+'\t'+convertToBinary(literalTable.get(i).location)+'\n';
                 }
 
-                output=output+'\n'+'\n'+"Opcode_Table"+'\n';
-                Set set=opcode_output.entrySet();
-                Iterator iterator1=set.iterator();
-                while(iterator1.hasNext())
-                {
-                    Map.Entry mentry=(Map.Entry) iterator1.next();
-                    output=output+mentry.getKey()+'\t'+mentry.getValue()+'\n';
+                output=output+'\n'+"Opcode_Table"+'\n';
+                Set set = opcode_output.entrySet();
+                Iterator iterator = set.iterator();
+                while(iterator.hasNext()) {
+                    Map.Entry mentry = (Map.Entry) iterator.next();
+                    output = output + mentry.getKey() + '\t' + mentry.getValue() + '\n';
                 }
-                output=output+"\n"+'\n';
+                output=output+"\n";
             }
             else
             {
@@ -328,7 +326,7 @@ public class Assembler
                         }
                         if(!opcode.equals("CLA") && !opcode.equals("STP"))
                         {
-                            output=output+opcodeTable.get(opcode)+"\t";
+                            output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get(opcode)+"\t";
                             if(operands.charAt(0)=='=')
                             {
                                 String value=operands.substring(1);
@@ -359,18 +357,51 @@ public class Assembler
                         }
                         else if(opcode.equals("CLA"))
                         {
-                            output=output+opcodeTable.get("CLA")+"\t";
+                            output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get("CLA")+"\t";
                         }
                         else if(opcode.equals("STP"))
                         {
-                            output=output+opcodeTable.get("STP")+"\t";
+                            output=output+convertToBinary(locationCounter)+"\t"+opcodeTable.get("STP")+"\t";
                             stopOccurred=true;
                         }
                         output=output+"\n";
                     }
+                    else
+                    {
+                        String[] instruction=lineString.split("\t");
+                        String operand=instruction[0];
+                        String type=instruction[1];
+                        String value;
+                        if(instruction.length==2)
+                        {
+                            value=null;
+                        }
+                        else
+                        {
+                            value=instruction[2];
+                        }
+                        for(int i=0;i<symbolTable.size();i++)
+                        {
+                            if(symbolTable.get(i).symbol.equals(operand))
+                            {
+                                if(!(symbolTable.get(i).value==null))
+                                {
+                                    output=output+convertToBinary(symbolTable.get(i).location)+"\t"+convertToBinary(Integer.parseInt(symbolTable.get(i).value))+"\n";
+                                }
+                                else
+                                {
+                                    output=output+convertToBinary(symbolTable.get(i).location)+"\t"+"00000000"+"\n";
+                                }
+                            }
+                        }
+                    }
                     locationCounter++;
                     lineString=bufferedReader.readLine();
                 }
+            }
+            for(int i=0;i<literalTable.size();i++)
+            {
+                output=output+convertToBinary(literalTable.get(i).location)+"\t"+convertToBinary((int) literalTable.get(i).value)+"\n";
             }
         }
         catch (IOException e)
@@ -398,6 +429,7 @@ public class Assembler
             ArrayList<String> errors1=new ArrayList<>();
             ArrayList<Symbol> symbolTable=new ArrayList<>();
             ArrayList<Literal> literalTable=new ArrayList<>();
+            HashMap<String,Integer> opcode_output=new HashMap<>();
             HashMap<String, String> opcodeTable=new HashMap<>();
             opcodeTable.put("CLA", "0000");
             opcodeTable.put("LAC", "0001");
@@ -413,7 +445,7 @@ public class Assembler
             opcodeTable.put("DIV", "1011");
             opcodeTable.put("STP", "1100");
 
-            String passOneOutput=passOne(symbolTable,literalTable,opcodeTable,bufferedReader,errors);
+            String passOneOutput=passOne(symbolTable,literalTable,opcodeTable,bufferedReader,opcode_output,errors);
             String passTwoOutput=passTwo(symbolTable,literalTable,opcodeTable,bufferedReader1,errors1);
             if(!passOneOutput.equals("") && !passTwoOutput.equals(""))
             {
