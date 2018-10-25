@@ -27,6 +27,8 @@ public class Assembler
             String lineString=bufferedReader.readLine();    //read line from file
             int lineCounter=1;           //counts the lines
             int locationCounter=0;     //keeps track of the length of instructions in words (1 word=12 bits)
+            HashMap<String,Integer> opcode_output = new HashMap<>();
+
 
             while(lineString!=null)
             {
@@ -178,6 +180,8 @@ public class Assembler
                         numOfWords=instructionLength/12;
                     }
                     locationCounter=locationCounter+numOfWords;                     //increasing locationCounter by number of words occupied
+                    
+                    opcode_output.put(opcode,locationCounter);
                     try
                     {
                         if(locationCounter>255)
@@ -189,6 +193,7 @@ public class Assembler
                     {
                         errors.add(e.getMessage());
                     }
+                    
                     lineString=bufferedReader.readLine();         //read next line
                 }
             }
@@ -202,7 +207,7 @@ public class Assembler
                 literal.location=locationCounter;
             }
 
-
+           
             HashMap<String,Integer> operandsDeclaration=new HashMap<>();
             for(int i=0;i<symbolTable.size();i++)
             {
@@ -259,6 +264,13 @@ public class Assembler
                     output=output+literalTable.get(i).value+'\t'+convertToBinary(literalTable.get(i).location)+'\n';
                 }
 
+                output=output+'\n'+"Opcode_Table"+'\n';
+                Set set = opcode_output.entrySet();
+                Iterator iterator = set.iterator();
+                while(iterator.hasNext()) {
+                    Map.Entry mentry = (Map.Entry) iterator.next();
+                    output = output + mentry.getKey() + '\t' + mentry.getValue() + '\n';
+                }
                 output=output+"\n";
             }
             else
