@@ -2,8 +2,7 @@
 #Vidit Jain 2017370
 #Sankalp Agrawal 2017363
 
-We have partially designed an assembler which will take an assembly code as input, and will output 
-the machine code, in a seperate text file.
+We have partially designed an assembler which will take an assembly code as input, and will output the machine code, in a seperate text file.
 
 We have assumed this format for the assembly language program.
 Label/symbol    Opcode    Operands	Comments
@@ -13,7 +12,21 @@ If not, our code will generate runtime errors.
 
 We have generated the Symbol table, Literal Table, Opcode table and some errors.
 
-We have a problem that when an immediate address(literal) is used as an operand, and there is no way we can specify the addressing mode, so the binary value for the literal in the operand part of the instruction may be mistaken as a memory address.
+---OUTPUT---
+Format of Symbol Table--
+Symbol name    Label/Operand   Memory address(in decimal system)    value of symbol
+(Each section is tabspace(\t) seperated.)
+
+Format of Literal Table--
+Literal    Memory address(in decimal system)
+(Each section is tabspace(\t) seperated.)
+
+Format of Opcode Table--
+Opcode name       Opcode binary address   Location Counter    Operand    Operand type 
+(Each section is tabspace(\t) seperated.)
+(For increasing the location counter, we have increased the length by number of words in the instruction.)
+
+Machine Code is generated in binary form.
 
 We have handled these errors- 
 1) When an opcode is not given
@@ -23,17 +36,7 @@ We have handled these errors-
 5) Opcode is supplied with too many operands
 6) Opcode is supplied with less number of operands than required
 7) STP statement not used
+8) When a symbol used has not been defined
 
-Format of Symbol Table
-Symbol    Memory address(in binary)    value of symbol
-
-Each section is tabspace(\t) seperated.
-
-Format of Literal Table
-Literal    Memory address(in binary)
-
-Each section is tabspace(\t) seperated.
 
 To run the code, the input file must be named as 'inputAssemblyCode.txt'.
-
-We are yet to handle the error that a symbol is used which has not been defined. It will be done when we write the code for pass2.
