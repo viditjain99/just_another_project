@@ -2,7 +2,7 @@
 #Vidit Jain 2017370
 #Sankalp Agrawal 2017363
 
-We have partially designed an assembler which will take an assembly code as input, and will output the machine code, in a seperate text file.
+We have designed an assembler which will take an assembly code as input, and will output the machine code, in a seperate text file.
 
 We have assumed this format for the assembly language program.
 Label/symbol    Opcode    Operands	Comments
